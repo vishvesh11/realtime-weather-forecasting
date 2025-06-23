@@ -19,10 +19,10 @@ spec:
           image: "{{ .Values.image.repository }}/dashboard-backend:{{ .Values.image.tag }}" # Updated image name for GHCR
           ports:
             - containerPort: {{ .Values.dashboardBackendService.service.targetPort }}
+              name: http
           env:
             - name: KAFKA_BROKER_URL
               value: {{ .Values.dashboardBackendService.env.KAFKA_BROKER_URL | quote }}
-            # InfluxDB Environment Variables from Kubernetes Secret
             - name: INFLUXDB_URL
               valueFrom:
                 secretKeyRef:

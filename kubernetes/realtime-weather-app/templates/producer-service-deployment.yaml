@@ -28,11 +28,11 @@ spec:
         - name: RAW_WEATHER_TOPIC
           value: raw-weather-data
         # Source OWM_API_KEY from the Kubernetes Secret
-        - name: {{ .Values.secrets.owmApiKeySecretKey }}
+        - name: {{ .Values.secrets.owmApiKey.key }} # Changed to new structure
           valueFrom:
             secretKeyRef:
-              name: {{ .Values.secrets.owmApiKeySecretName }}
-              key: {{ .Values.secrets.owmApiKeySecretKey }}
+              name: {{ .Values.secrets.owmApiKey.name }} # Changed to new structure
+              key: {{ .Values.secrets.owmApiKey.key }}
         resources:
           {{- toYaml .Values.producerService.resources | nindent 12 }}
         # livenessProbe, readinessProbe (optional, for health checks)

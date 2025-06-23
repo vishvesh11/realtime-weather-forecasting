@@ -70,12 +70,6 @@ jobs:
           kubectl cluster-info
           kubectl get nodes # Add this to verify node connection
 
-      - name: Create OWM API Key Kubernetes Secret
-        run: |
-          kubectl create secret generic owm-api-key-secret \
-            --from-literal=OWM_API_KEY=${{ secrets.OWM_API_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-
       - name: Update Helm Chart Dependencies
         run: helm dependency update kubernetes/realtime-weather-app
 

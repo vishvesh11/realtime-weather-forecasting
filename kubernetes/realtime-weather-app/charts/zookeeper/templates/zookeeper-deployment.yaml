@@ -27,9 +27,10 @@ spec:
           name: election
         env:
         - name: ZOO_MY_ID
-          value: "1" # Important for single replica Zookeeper
-        - name: ZOO_SERVERS
-          value: "server.1=0.0.0.0:2888:3888" # For single instance
+          value: "1"
+
+        - name: ZOO_CLIENT_PORT
+          value: "{{ .Values.service.port }}"
         volumeMounts:
         - name: zookeeper-data
           mountPath: /data

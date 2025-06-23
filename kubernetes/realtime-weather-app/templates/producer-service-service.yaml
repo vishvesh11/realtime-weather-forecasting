@@ -7,10 +7,8 @@ metadata:
     app.kubernetes.io/component: producer-service
 spec:
   selector:
-    {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+    {{- include "realtime-weather-app.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: producer-service
-  producer is a pure consumer, doesn't need to expose ports usually
-  # If it did expose a metrics or health port, you'd define it here.
   ports:
   - protocol: TCP
     port: 80

@@ -1,17 +1,23 @@
-# --- Global Settings ---
+
 image:
-  repository: ghcr.io/{{ .Values.github.username }}/{{ .Values.github.repositoryName }}
+  repository: ghcr.io/vishvesh11/realtime-weather-app
   tag: latest
   pullPolicy: Always
 
 github:
-  username: vishvesh11 # IMPORTANT: Replace with your GitHub username (lowercase)
-  repositoryName: realtime-weather-app # IMPORTANT: Replace with your GitHub repository name
+  username: vishvesh11
+  repositoryName: realtime-weather-app
+
+
+imagePullSecrets:
+  - name: ghcr-secret
 
 # --- Secrets Configuration ---
 secrets:
-  owmApiKeySecretName: owm-api-key-secret
-  owmApiKeySecretKey: OWM_API_KEY
+  owmApiKey:
+    createSecret: true
+    name: owm-api-key-secret
+    key: OWM_API_KEY
 
   influxdb:
     createSecret: false
@@ -32,7 +38,7 @@ zookeeper:
     port: 2181
   storage:
     size: 1Gi
-    storageClassName: standard # Ensure this StorageClass exists in your cluster
+    storageClassName: local-path
   resources:
     requests:
       memory: "256Mi"
@@ -51,7 +57,7 @@ kafka:
     port: 9092
   storage:
     size: 5Gi
-    storageClassName: standard # Ensure this StorageClass exists in your cluster
+    storageClassName: local-path
   resources:
     requests:
       memory: "512Mi"
@@ -59,16 +65,38 @@ kafka:
     limits:
       memory: "1Gi"
       cpu: "700m"
-  # This connects Kafka to the Zookeeper service created by the Zookeeper subchart
   zookeeper:
-    connect: "realtime-weather-app-zookeeper:2181" # IMPORTANT: Default service name for Zookeeper subchart
+    connect: "realtime-weather-app-zookeeper:2181"
+
+
+  extraEnvVars:
+
+    - name: KAFKA_CFG_LISTENERS
+      value: "PLAINTEXT://:9092,PLAINTEXT_HOST://:9093"
+
+    - name: KAFKA_CFG_ADVERTISED_LISTENERS
+      value: "PLAINTEXT://realtime-weather-app-kafka:9092,PLAINTEXT_HOST://$(KAFKA_HOST):9093"
+
+
+    - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+      value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+
+
+    - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+      value: "PLAINTEXT"
+
+    - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
+      value: "1"
+    - name: KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS
+      value: "0"
+
 
 # --- Producer Service ---
 producerService:
   enabled: true
   replicaCount: 1
   env:
-    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092" # IMPORTANT: Default service name for Kafka subchart
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092" # Producer connects to internal port
   resources:
     requests:
       memory: "128Mi"
@@ -82,7 +110,7 @@ dataProcessorService:
   enabled: true
   replicaCount: 1
   env:
-    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092" # Data Processor connects to internal port
   resources:
     requests:
       memory: "256Mi"
@@ -100,7 +128,7 @@ forecastService:
     key: "kubernetes.io/hostname"
     value: "vishvesh-server-2"
   env:
-    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092" # Forecast connects to internal port
   resources:
     requests:
       memory: "512Mi"
@@ -119,7 +147,6 @@ dashboardBackendService:
     type: ClusterIP
   env:
     KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
-    # InfluxDB environment variables will be pulled from secret
   resources:
     requests:
       memory: "128Mi"
@@ -128,7 +155,7 @@ dashboardBackendService:
       memory: "256Mi"
       cpu: "200m"
 
-# --- Frontend Service (Next.js) ---
+
 frontendService:
   enabled: true
   replicaCount: 1

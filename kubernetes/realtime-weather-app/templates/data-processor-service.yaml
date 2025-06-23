@@ -7,6 +7,11 @@ metadata:
     app.kubernetes.io/component: data-processor
 spec:
   selector:
-    {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+    {{- include "realtime-weather-app.selectorLabels" . | nindent 4 }} # Corrected indentation for consistency
     app.kubernetes.io/component: data-processor
+  ports:
+    - protocol: TCP
+      port: 5002
+      targetPort: 5002
+      name: internal-consumer
   type: ClusterIP

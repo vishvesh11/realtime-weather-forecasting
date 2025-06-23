@@ -17,44 +17,20 @@ spec:
         {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: forecast-service
     spec:
-      { { - if .Values.influxdb.nodeSelector.enabled } }
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: { { .Values.influxdb.nodeSelector.key | quote } }
-                    operator: In
-                    values:
-                      - { { .Values.influxdb.nodeSelector.value | quote } }
-      { { - end } }
+      {{- if .Values.forecastService.nodeSelector.enabled }}
+      nodeSelector: # Using nodeSelector directly as defined in values.yaml
+        {{ .Values.forecastService.nodeSelector.key }}: {{ .Values.forecastService.nodeSelector.value | quote }}
+      {{- end }}
       containers:
-
-      - name: forecast-predictor
-        image: "{{ .Values.image.repository }}/forecast-predictor:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        env:
-          - name: KAFKA_BROKER_URL
-            value: {{ .Values.dashboardBackendService.env.KAFKA_BROKER_URL | quote }}
-          - name: INFLUXDB_URL
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets.influxdb.existingSecretName }}
-                key: {{ .Values.secrets.influxdb.keys.url }}
-          - name: INFLUXDB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets.influxdb.existingSecretName }}
-                key: {{ .Values.secrets.influxdb.keys.token }}
-          - name: INFLUXDB_ORG
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets.influxdb.existingSecretName }}
-                key: {{ .Values.secrets.influxdb.keys.org }}
-          - name: INFLUXDB_BUCKET
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secrets.influxdb.existingSecretName }}
-                key: {{ .Values.secrets.influxdb.keys.bucket }}
-        resources:
-          {{- toYaml .Values.forecastService.resources | nindent 12 }}
+        - name: forecast-predictor
+          image: "{{ .Values.image.repository }}/forecast-service:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KAFKA_BROKER_URL
+              value: {{ .Values.forecastService.env.KAFKA_BROKER_URL | quote }} # Corrected source
+            - name: PROCESSED_WEATHER_TOPIC
+              value: processed-weather-data
+            - name: PREDICTIONS_TOPIC
+              value: weather-predictions
+          resources:
+            {{- toYaml .Values.forecastService.resources | nindent 12 }}
