@@ -1,6 +1,6 @@
 
 image:
-  repository: ghcr.io/vishvesh11/realtime-weather-app
+  repository: ghcr.io/vishvesh11/realtime-weather-forecasting
   tag: latest
   pullPolicy: Always
 
