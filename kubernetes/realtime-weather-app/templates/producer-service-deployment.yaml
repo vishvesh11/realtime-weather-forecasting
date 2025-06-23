@@ -1,0 +1,38 @@
+# kubernetes/realtime-weather-app/templates/producer-service-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: producer-service-deployment
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: producer-service
+spec:
+  replicas: {{ .Values.producerService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: producer-service
+  template:
+    metadata:
+      labels:
+        {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: producer-service
+    spec:
+      containers:
+      - name: producer-service
+        image: "{{ .Values.image.repository }}/producer-service:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: KAFKA_BROKER_URL
+          value: {{ .Values.kafka.brokerUrl | quote }}
+        - name: RAW_WEATHER_TOPIC
+          value: raw-weather-data
+        # Source OWM_API_KEY from the Kubernetes Secret
+        - name: {{ .Values.secrets.owmApiKeySecretKey }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.owmApiKeySecretName }}
+              key: {{ .Values.secrets.owmApiKeySecretKey }}
+        resources:
+          {{- toYaml .Values.producerService.resources | nindent 12 }}
+        # livenessProbe, readinessProbe (optional, for health checks)

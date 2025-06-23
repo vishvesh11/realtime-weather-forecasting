@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kafka.fullname" . }}
+  labels:
+    {{- include "kafka.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kafka.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "kafka.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: kafka
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          name: client
+        env:
+        - name: KAFKA_BROAKER_ID
+          value: "1" # For single broker
+        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+          value: {{ .Values.zookeeper.connect | quote }} # Zookeeper connection string
+        - name: KAFKA_CFG_LISTENERS
+          value: CLIENT://:{{ .Values.service.port }}
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: CLIENT://{{ include "kafka.fullname" . }}:{{ .Values.service.port }}
+        - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+          value: CLIENT:PLAINTEXT
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /bitnami/kafka
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: kafka-data
+        persistentVolumeClaim:
+          claimName: {{ include "kafka.fullname" . }}-data

@@ -22,7 +22,7 @@ producer = KafkaProducer(
 
 def fetch_and_publish_weather(location_name, lat, lon):
     print(f"Fetching weather for {location_name}...")
-    url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid=dc60fc76b8942cf11a238ff3de122f01&units=metric"
+    url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={OWM_API_KEY}&units=metric"
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()

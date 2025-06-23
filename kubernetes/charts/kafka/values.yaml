@@ -1,0 +1,22 @@
+# kubernetes/charts/kafka/values.yaml
+replicaCount: 1
+image:
+  repository: bitnami/kafka
+  tag: 3.6.1-debian-11-r0
+  pullPolicy: IfNotPresent
+service:
+  port: 9092
+storage:
+  size: 5Gi
+  accessModes: [ReadWriteOnce]
+  storageClassName: standard
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "300m"
+  limits:
+    memory: "1Gi"
+    cpu: "700m"
+
+zookeeper:
+  connect: ""

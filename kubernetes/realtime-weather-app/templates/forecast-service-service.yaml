@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: forecast-service-service
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: forecast-service
+spec:
+  selector:
+    {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+    app.kubernetes.io/component: forecast-service
+  type: ClusterIP

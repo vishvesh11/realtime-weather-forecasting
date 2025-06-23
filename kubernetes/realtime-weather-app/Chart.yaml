@@ -1,0 +1,12 @@
+apiVersion: v2
+name: realtime-weather-app
+description: A Helm chart for deploying the Realtime Weather Forecasting application.
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+  - name: zookeeper
+    version: "0.1.0" # Must match zookeeper chart version
+    repository: "file://charts/zookeeper" # Path relative to Chart.yaml
+  - name: kafka
+    version: "0.1.0" # Must match kafka chart version
+    repository: "file://charts/kafka" # Path relative to Chart.yaml

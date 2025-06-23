@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.frontendService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: "{{ .Values.image.repository }}/frontend:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: NEXT_PUBLIC_API_BASE_URL
+          value: "http://dashboard-backend-service:5000" # Internal cluster service name
+        resources:
+          {{- toYaml .Values.frontendService.resources | nindent 12 }}
+        ports:
+        - containerPort: {{ .Values.frontendService.service.targetPort }}
+          name: http

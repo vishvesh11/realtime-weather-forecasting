@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zookeeper.fullname" . }}
+  labels:
+    {{- include "zookeeper.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "zookeeper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "zookeeper.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: zookeeper
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          name: client
+        - containerPort: 2888 # Follower port
+          name: follower
+        - containerPort: 3888 # Election port
+          name: election
+        env:
+        - name: ZOO_MY_ID
+          value: "1" # Important for single replica Zookeeper
+        - name: ZOO_SERVERS
+          value: "server.1=0.0.0.0:2888:3888" # For single instance
+        volumeMounts:
+        - name: zookeeper-data
+          mountPath: /data
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: zookeeper-data
+        persistentVolumeClaim:
+          claimName: {{ include "zookeeper.fullname" . }}-data

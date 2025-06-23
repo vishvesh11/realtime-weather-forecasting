@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  selector:
+    {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+    app.kubernetes.io/component: frontend
+  ports:
+    - protocol: TCP
+      port: {{ .Values.frontendService.service.port }}
+      targetPort: {{ .Values.frontendService.service.targetPort }}
+      name: http
+  type: {{ .Values.frontendService.service.type }}

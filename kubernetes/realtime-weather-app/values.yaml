@@ -1,0 +1,154 @@
+# --- Global Settings ---
+image:
+  repository: ghcr.io/{{ .Values.github.username }}/{{ .Values.github.repositoryName }}
+  tag: latest
+  pullPolicy: Always
+
+github:
+  username: vishvesh11 # IMPORTANT: Replace with your GitHub username (lowercase)
+  repositoryName: realtime-weather-app # IMPORTANT: Replace with your GitHub repository name
+
+# --- Secrets Configuration ---
+secrets:
+  owmApiKeySecretName: owm-api-key-secret
+  owmApiKeySecretKey: OWM_API_KEY
+
+  influxdb:
+    createSecret: false
+    existingSecretName: influxdb-secrets
+    keys:
+      url: INFLUXDB_URL
+      token: INFLUXDB_TOKEN
+      org: INFLUXDB_ORG
+      bucket: INFLUXDB_BUCKET
+
+# --- Zookeeper Subchart Configuration ---
+zookeeper:
+  replicaCount: 1
+  image:
+    repository: zookeeper
+    tag: 3.8.0
+  service:
+    port: 2181
+  storage:
+    size: 1Gi
+    storageClassName: standard # Ensure this StorageClass exists in your cluster
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "400m"
+
+# --- Kafka Subchart Configuration ---
+kafka:
+  replicaCount: 1
+  image:
+    repository: bitnami/kafka
+    tag: 3.6.1-debian-11-r0
+  service:
+    port: 9092
+  storage:
+    size: 5Gi
+    storageClassName: standard # Ensure this StorageClass exists in your cluster
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "700m"
+  # This connects Kafka to the Zookeeper service created by the Zookeeper subchart
+  zookeeper:
+    connect: "realtime-weather-app-zookeeper:2181" # IMPORTANT: Default service name for Zookeeper subchart
+
+# --- Producer Service ---
+producerService:
+  enabled: true
+  replicaCount: 1
+  env:
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092" # IMPORTANT: Default service name for Kafka subchart
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# --- Data Processor Service ---
+dataProcessorService:
+  enabled: true
+  replicaCount: 1
+  env:
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "400m"
+
+# --- Forecast Service (ML Predictor) ---
+forecastService:
+  enabled: true
+  replicaCount: 1
+  env:
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# --- Dashboard Backend Service ---
+dashboardBackendService:
+  enabled: true
+  replicaCount: 1
+  service:
+    port: 5000
+    targetPort: 5000
+    type: ClusterIP
+  env:
+    KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
+    # InfluxDB environment variables will be pulled from secret
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# --- Frontend Service (Next.js) ---
+frontendService:
+  enabled: true
+  replicaCount: 1
+  service:
+    port: 3000
+    targetPort: 3000
+    type: ClusterIP
+  ingress:
+    enabled: true
+    className: traefik
+    host: weather.vishvesh.me
+    paths:
+      - path: /
+        pathType: Prefix
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod-cloudflare
+    tls:
+      - hosts:
+          - weather.vishvesh.me
+        secretName: weather-vishvesh-me-tls
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "400m"
