@@ -60,6 +60,10 @@ jobs:
           docker build -t ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/frontend:latest ./frontend
           docker push ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/frontend:latest
 
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: '3.8.1'
       # --- Kubernetes Deployment with Helm ---
       - name: Set Kubeconfig
         run: |
@@ -68,12 +72,6 @@ jobs:
           chmod 600 ~/.kube/config
           kubectl cluster-info
           kubectl get nodes # Add this to verify node connection
-
-      - name: Install Helm
-        uses: azure/setup-helm@v1
-        with:
-          version: '3.8.1'
-
 
       - name: Create OWM API Key Kubernetes Secret
         run: |
