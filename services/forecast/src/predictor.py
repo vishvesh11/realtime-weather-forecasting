@@ -13,7 +13,7 @@ PROCESSED_WEATHER_TOPIC = "processed-weather-data"
 PREDICTIONS_TOPIC = "weather-predictions"
 
 
-MODELS_DIR = "src"
+MODELS_DIR = "/app/src/ml-models"
 
 
 TEMP_MODEL_PATH_HOURLY = "ml-models/indore_hourly_temp_lgbm_model.joblib"

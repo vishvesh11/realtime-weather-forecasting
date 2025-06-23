@@ -8,9 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        inter: ['Inter', 'sans-serif'], // Add Inter font
-      },
+      // fontFamily: {
+      //   inter: ['Inter', 'sans-serif'], // Add Inter font
+      // },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },

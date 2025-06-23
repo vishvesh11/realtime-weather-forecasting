@@ -1,3 +1,4 @@
+import time
 import json
 import os
 from kafka import KafkaConsumer, KafkaProducer
@@ -124,6 +125,8 @@ def process_weather_data(raw_data):
 
 
 if __name__ == "__main__":
+    print("Waiting 15 seconds before connecting to Kafka...")
+    time.sleep(15)
     print(
         f"Starting weather data processor. Consuming from '{RAW_WEATHER_TOPIC}' and producing to '{PROCESSED_WEATHER_TOPIC}'...")
     try:
