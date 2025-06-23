@@ -2,7 +2,6 @@
 'use client'; 
 
 import { useState, useEffect, useCallback } from 'react';
-//import Image from 'next/image'; // Import Image for optimized images
 import { Sun, Cloud, CloudRain, CloudSnow, Thermometer, Wind, Droplet, Gauge, Eye, Sunrise, Sunset, CalendarDays, Maximize, Minimize } from 'lucide-react'; // Icons
 
 
