@@ -6,7 +6,7 @@ image:
 
 github:
   username: vishvesh11
-  repositoryName: realtime-weather-app
+  repositoryName: realtime-weather-forecasting
 
 
 imagePullSecrets:
