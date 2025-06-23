@@ -85,7 +85,6 @@ jobs:
 
       - name: Upgrade/Install Helm Chart
         run: |
-
           helm upgrade --install realtime-weather-app kubernetes/realtime-weather-app \
             --values kubernetes/realtime-weather-app/values.yaml \
             --set github.username=${{ github.actor }} \
