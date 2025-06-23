@@ -17,6 +17,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3 # Required for multi-arch builds
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -27,40 +30,59 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }} # Use GITHUB_TOKEN for authentication
 
-      - name: Get Repository Name
+      - name: Get Lowercase Repository Name
         id: repo_name
-        run: echo "::set-output name=name::$(echo '${{ github.repository }}' | cut -d'/' -f2)"
+        run: echo "::set-output name=name::$(echo '${{ github.repository }}' | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')"
 
+      # Multi-arch build and push for Producer Service
       - name: Build and Push Producer Service
-        run: |
-          docker build -t ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/producer-service:latest ./services/producer-service
-          docker push ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/producer-service:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/producer-service
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/producer-service:latest
 
+      # Multi-arch build and push for Data Processor
       - name: Build and Push Data Processor
-        run: |
-          docker build -t ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/data-processor:latest ./services/data-processor
-          docker push ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/data-processor:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/data-processor
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/data-processor:latest
 
+      # Multi-arch build and push for Forecast Service
       - name: Build and Push Forecast Service
-        run: |
-          docker build -t ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/forecast-service:latest ./services/forecast
-          docker push ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/forecast-service:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/forecast
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/forecast-service:latest
 
+      # Multi-arch build and push for Dashboard Backend
       - name: Build and Push Dashboard Backend
-        run: |
-          docker build -t ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/dashboard-backend:latest ./services/dashboard-backend
-          docker push ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/dashboard-backend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/dashboard-backend
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/dashboard-backend:latest
 
+      # Multi-arch build and push for Frontend
       - name: Build and Push Frontend
-        run: |
-          docker build -t ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/frontend:latest ./frontend
-          docker push ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/frontend:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.actor }}/${{ steps.repo_name.outputs.name }}/frontend:latest
 
       - name: Install Helm
         uses: azure/setup-helm@v1
         with:
           version: '3.8.1'
-
 
       - name: Set Kubeconfig
         run: |
