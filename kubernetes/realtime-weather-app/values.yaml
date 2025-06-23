@@ -95,6 +95,10 @@ dataProcessorService:
 forecastService:
   enabled: true
   replicaCount: 1
+  nodeSelector:
+    enabled: true
+    key: "kubernetes.io/hostname"
+    value: "vishvesh-server-2"
   env:
     KAFKA_BROKER_URL: "realtime-weather-app-kafka:9092"
   resources:
