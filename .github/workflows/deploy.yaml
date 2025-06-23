@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'kubernetes/**'
-      - 'services/**'
-      - 'frontend/**'
 
 jobs:
   build-and-deploy:
