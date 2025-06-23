@@ -14,6 +14,10 @@ spec:
       labels:
         app: dashboard-backend
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: dashboard-backend
           image: "{{ .Values.image.repository }}/dashboard-backend:{{ .Values.image.tag }}" # Updated image name for GHCR

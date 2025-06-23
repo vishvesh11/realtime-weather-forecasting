@@ -18,7 +18,12 @@ spec:
         {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: producer-service
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
+
       - name: producer-service
         image: "{{ .Values.image.repository }}/producer-service:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}

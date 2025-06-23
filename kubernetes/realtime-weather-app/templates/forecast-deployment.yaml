@@ -17,6 +17,10 @@ spec:
         {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: forecast-service
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.forecastService.nodeSelector.enabled }}
       nodeSelector: # Using nodeSelector directly as defined in values.yaml
         {{ .Values.forecastService.nodeSelector.key }}: {{ .Values.forecastService.nodeSelector.value | quote }}
