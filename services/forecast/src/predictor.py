@@ -6,27 +6,25 @@ from kafka import KafkaConsumer, KafkaProducer
 import joblib
 from datetime import datetime, timedelta
 import pytz
+import time # Ensure this is imported
 
 # --- Configuration ---
 KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL", "localhost:9092")
 PROCESSED_WEATHER_TOPIC = "processed-weather-data"
 PREDICTIONS_TOPIC = "weather-predictions"
 
+BASE_MODELS_PATH = "/app/src/ml-models"
 
-MODELS_DIR = "/app/src/ml-models"
-
-
-TEMP_MODEL_PATH_HOURLY = "ml-models/indore_hourly_temp_lgbm_model.joblib"
-PRECIP_MODEL_PATH_HOURLY = "ml-models/indore_hourly_precip_lgbm_model.joblib"
-SCALER_PATH_HOURLY = "ml-models/indore_hourly_weather_scaler.joblib"
-FEATURE_NAMES_PATH_HOURLY = "ml-models/indore_hourly_feature_names.joblib"
+TEMP_MODEL_PATH_HOURLY = os.path.join(BASE_MODELS_PATH, "indore_hourly_temp_lgbm_model.joblib")
+PRECIP_MODEL_PATH_HOURLY = os.path.join(BASE_MODELS_PATH, "indore_hourly_precip_lgbm_model.joblib")
+SCALER_PATH_HOURLY = os.path.join(BASE_MODELS_PATH, "indore_hourly_weather_scaler.joblib")
+FEATURE_NAMES_PATH_HOURLY = os.path.join(BASE_MODELS_PATH, "indore_hourly_feature_names.joblib")
 # Daily Model Assets
-MIN_TEMP_MODEL_PATH_DAILY = "ml-models/indore_daily_min_temp_lgbm_model.joblib"
-MAX_TEMP_MODEL_PATH_DAILY = "ml-models/indore_daily_max_temp_lgbm_model.joblib"
-PRECIP_MODEL_PATH_DAILY = "ml-models/indore_daily_precip_lgbm_model.joblib"
-SCALER_PATH_DAILY = "ml-models/indore_daily_weather_scaler.joblib"
-FEATURE_NAMES_PATH_DAILY = "ml-models/indore_daily_feature_names.joblib"
-
+MIN_TEMP_MODEL_PATH_DAILY = os.path.join(BASE_MODELS_PATH, "indore_daily_min_temp_lgbm_model.joblib")
+MAX_TEMP_MODEL_PATH_DAILY = os.path.join(BASE_MODELS_PATH, "indore_daily_max_temp_lgbm_model.joblib")
+PRECIP_MODEL_PATH_DAILY = os.path.join(BASE_MODELS_PATH, "indore_daily_precip_lgbm_model.joblib")
+SCALER_PATH_DAILY = os.path.join(BASE_MODELS_PATH, "indore_daily_weather_scaler.joblib")
+FEATURE_NAMES_PATH_DAILY = os.path.join(BASE_MODELS_PATH, "indore_daily_feature_names.joblib")
 
 
 PREDICTION_HORIZON_HOURS = 12
@@ -76,7 +74,7 @@ def load_models_and_scalers():
 
         print("Models, scalers, and feature names loaded successfully.")
     except FileNotFoundError as e:
-        print(f"Error loading model files. Make sure they are in the '{MODELS_DIR}' directory. {e}")
+        print(f"Error loading model files. Make sure they are in the '{BASE_MODELS_PATH}' directory. {e}")
         exit(1)
 
     return models, scalers, feature_names
@@ -277,6 +275,10 @@ def make_predictions(processed_record):
 
 # --- Main Prediction Loop ---
 if __name__ == "__main__":
+    # Add a small delay to give Kafka/network a moment to stabilize
+    print("Waiting 15 seconds before connecting to Kafka...")
+    time.sleep(15) # This was added earlier.
+
     consumer = KafkaConsumer(
         PROCESSED_WEATHER_TOPIC,
         bootstrap_servers=[KAFKA_BROKER_URL],
@@ -316,11 +318,11 @@ if __name__ == "__main__":
                 'uv': processed_data['current'].get('uvi'),
                 'solar_rad': processed_data['current'].get('solar_rad', 0),
                 'wind_dir': processed_data['current'].get('wind_deg', 0),
-                'wind_gust_spd': processed_data['current'].get('wind_gust_spd', 0),
-                'slp': processed_data['current'].get('pressure', 0),
-                'dhi': processed_data['current'].get('dhi', 0),
-                'dni': processed_data['current'].get('dni', 0),
-                'ghi': processed_data['current'].get('ghi', 0),
+                'wind_gust_spd': processed_record['current'].get('wind_gust_spd', 0),
+                'slp': processed_record['current'].get('pressure', 0),
+                'dhi': processed_record['current'].get('dhi', 0),
+                'dni': processed_record['current'].get('dni', 0),
+                'ghi': processed_record['current'].get('ghi', 0),
                 'is_night_time': (current_dt_utc.hour < 6) or (current_dt_utc.hour > 18)
             }
             # Ensure all values are numeric for the history DF

@@ -4,7 +4,7 @@ import os
 from kafka import KafkaConsumer, KafkaProducer
 
 # Config
-KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL", "localhost:9092")
+KAFKA_BROKER_URL = "realtime-weather-app-kafka:9092"
 RAW_WEATHER_TOPIC = "raw-weather-data"
 PROCESSED_WEATHER_TOPIC = "processed-weather-data"
 
