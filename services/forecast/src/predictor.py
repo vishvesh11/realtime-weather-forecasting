@@ -318,11 +318,11 @@ if __name__ == "__main__":
                 'uv': processed_data['current'].get('uvi'),
                 'solar_rad': processed_data['current'].get('solar_rad', 0),
                 'wind_dir': processed_data['current'].get('wind_deg', 0),
-                'wind_gust_spd': processed_record['current'].get('wind_gust_spd', 0),
-                'slp': processed_record['current'].get('pressure', 0),
-                'dhi': processed_record['current'].get('dhi', 0),
-                'dni': processed_record['current'].get('dni', 0),
-                'ghi': processed_record['current'].get('ghi', 0),
+                'wind_gust_spd': processed_data['current'].get('wind_gust_spd', 0),
+                'slp': processed_data['current'].get('pressure', 0),
+                'dhi': processed_data['current'].get('dhi', 0),
+                'dni': processed_data['current'].get('dni', 0),
+                'ghi': processed_data['current'].get('ghi', 0),
                 'is_night_time': (current_dt_utc.hour < 6) or (current_dt_utc.hour > 18)
             }
             # Ensure all values are numeric for the history DF
