@@ -27,7 +27,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: KAFKA_BROKER_URL
-          value: {{ .Values.kafka.brokerUrl | quote }}
+          value: "realtime-weather-app-kafka:9092"
         - name: RAW_WEATHER_TOPIC
           value: raw-weather-data
         - name: PROCESSED_WEATHER_TOPIC

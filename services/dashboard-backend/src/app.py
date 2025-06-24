@@ -9,7 +9,7 @@ from flask_cors import CORS  # To allow frontend to make requests
 from kafka import KafkaConsumer
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
-
+import sys
 # --- Configuration ---
 KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL", "localhost:9092")
 PROCESSED_WEATHER_TOPIC = "processed-weather-data"
@@ -29,15 +29,30 @@ influxdb_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INF
 write_api = influxdb_client.write_api(write_options=SYNCHRONOUS)
 query_api = influxdb_client.query_api()
 
-# Kafka Consumer setup (will be run in a separate thread)
-kafka_consumer = KafkaConsumer(
-    PROCESSED_WEATHER_TOPIC,
-    bootstrap_servers=[KAFKA_BROKER_URL],
-    group_id='dashboard-backend-consumer-group',
-    auto_offset_reset='latest',  # Start consuming from the latest message
-    enable_auto_commit=True,
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
+def create_kafka_consumer():
+    print("Producer service: Waiting 15 seconds before connecting to Kafka...")
+    sys.stdout.flush()
+    time.sleep(15)
+
+    try:
+        kafka_consumer = KafkaConsumer(
+            PROCESSED_WEATHER_TOPIC,
+            bootstrap_servers=[KAFKA_BROKER_URL],
+            group_id='dashboard-backend-consumer-group',
+            auto_offset_reset='latest',  # Start consuming from the latest message
+            enable_auto_commit=True,
+            value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+        )
+        print(f"Consumer connected to Kafka at {KAFKA_BROKER_URL}")
+        sys.stdout.flush()
+        return kafka_consumer
+    except Exception as e:
+        print(f"Failed to connect to Kafka: {e}")
+        sys.stdout.flush()
+        sys.exit(1)
+
+
+kafka_consumer = create_kafka_consumer()
 
 
 def kafka_consumer_thread():

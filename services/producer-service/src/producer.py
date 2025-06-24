@@ -3,10 +3,11 @@ import time
 import os
 from kafka import KafkaProducer
 import json
+import sys
 
 # Replace with your actual values
 OWM_API_KEY = os.getenv("OWM_API_KEY")
-KAFKA_BROKER_URL = "realtime-weather-app-kafka:9092"
+KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL", "realtime-weather-app-kafka:9092")
 RAW_WEATHER_TOPIC = "raw-weather-data"
 
 LOCATIONS = {
@@ -14,11 +15,31 @@ LOCATIONS = {
     "pune-wakad": {"lat": 18.6076, "lon": 73.7415},   # Example coords
     "bangalore-hsr": {"lat": 12.9126, "lon": 77.6387} # Example coords
 }
+def create_kafka_producer():
+    print("Producer service: Waiting 15 seconds before connecting to Kafka...")
+    sys.stdout.flush()
+    time.sleep(15)
 
-producer = KafkaProducer(
-    bootstrap_servers=[KAFKA_BROKER_URL],
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
+    try:
+        producer = KafkaProducer(
+            bootstrap_servers=[KAFKA_BROKER_URL],
+            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+            acks='all'
+        )
+        print(f"Producer connected to Kafka at {KAFKA_BROKER_URL}")
+        sys.stdout.flush()
+        return producer
+    except Exception as e:
+        print(f"Failed to connect to Kafka: {e}")
+        sys.stdout.flush()
+        sys.exit(1)
+
+producer = create_kafka_producer()
+
+if producer is None:
+    sys.exit(1)
+
+
 
 def fetch_and_publish_weather(location_name, lat, lon):
     print(f"Fetching weather for {location_name}...")
@@ -43,4 +64,4 @@ if __name__ == "__main__":
             fetch_and_publish_weather(loc_name, coords['lat'], coords['lon'])
         producer.flush() # Ensure all messages are sent
         print("Waiting 10 minutes for next poll...")
-        time.sleep(60 * 10) # Poll every 10 minutes
+        time.sleep(60 * 10)

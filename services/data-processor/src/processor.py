@@ -2,27 +2,59 @@ import time
 import json
 import os
 from kafka import KafkaConsumer, KafkaProducer
+import sys
 
 # Config
-KAFKA_BROKER_URL = "realtime-weather-app-kafka:9092"
+KAFKA_BROKER_URL = os.getenv("KAFKA_BROKER_URL", "realtime-weather-app-kafka:9092")
 RAW_WEATHER_TOPIC = "raw-weather-data"
 PROCESSED_WEATHER_TOPIC = "processed-weather-data"
 
-# Consumer setup
-consumer = KafkaConsumer(
-    RAW_WEATHER_TOPIC,
-    bootstrap_servers=[KAFKA_BROKER_URL],
-    auto_offset_reset='latest',
-    enable_auto_commit=True,
-    group_id='weather-data-processor-group',
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
 
-producer = KafkaProducer(
-    bootstrap_servers=[KAFKA_BROKER_URL],
-    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-    acks='all'  # Ensure all replicas have received the message
-)
+def create_kafka_consumer():
+    print("Producer service: Waiting 15 seconds before connecting to Kafka...")
+    sys.stdout.flush()
+    time.sleep(15)
+
+    try:
+        consumer = KafkaConsumer(
+            RAW_WEATHER_TOPIC,
+            bootstrap_servers=[KAFKA_BROKER_URL],
+            auto_offset_reset='latest',
+            enable_auto_commit=True,
+            group_id='weather-data-processor-group',
+            value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+        )
+        print(f"Consumer connected to Kafka at {KAFKA_BROKER_URL}")
+        sys.stdout.flush()
+        return consumer
+    except Exception as e:
+        print(f"Failed to connect to Kafka: {e}")
+        sys.stdout.flush()
+        sys.exit(1)
+
+
+def create_kafka_producer():
+    print("Producer service: Waiting 15 seconds before connecting to Kafka...")
+    sys.stdout.flush()
+    time.sleep(15)
+
+    try:
+        producer = KafkaProducer(
+            bootstrap_servers=[KAFKA_BROKER_URL],
+            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+            acks='all'
+        )
+        print(f"Producer connected to Kafka at {KAFKA_BROKER_URL}")
+        sys.stdout.flush()
+        return producer
+    except Exception as e:
+        print(f"Failed to connect to Kafka: {e}")
+        sys.stdout.flush()
+        sys.exit(1)
+
+
+consumer = create_kafka_consumer()
+producer = create_kafka_producer()
 
 
 def process_weather_data(raw_data):
@@ -150,4 +182,3 @@ if __name__ == "__main__":
         consumer.close()
         producer.close()
         print("Kafka consumer and producer closed.")
-
