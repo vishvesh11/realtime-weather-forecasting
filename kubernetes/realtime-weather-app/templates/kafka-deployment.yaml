@@ -28,7 +28,6 @@ spec:
           ports:
             - name: client
               containerPort: 9092
-
           env:
             - name: KAFKA_CFG_ZOOKEEPER_CONNECT
               value: "{{ include "realtime-weather-app.fullname" . }}-zookeeper:2181"
@@ -36,8 +35,8 @@ spec:
               value: "1"
             - name: KAFKA_CFG_LISTENERS
               value: "PLAINTEXT://:9092"
-            - name: KAFKA_CFG_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://$(KAFKA_HOST):9092" # Use KAFKA_HOST env var defined below
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS_COMMAND
+              value: "echo PLAINTEXT://$(KAFKA_HOST):9092"
             - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
               value: "PLAINTEXT:PLAINTEXT"
             - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
@@ -93,4 +92,4 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
+      storage: 5Gi # Adjust storage size as needed
