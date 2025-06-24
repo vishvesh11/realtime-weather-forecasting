@@ -68,7 +68,6 @@ producerService:
   enabled: true
   replicaCount: 1
   env:
-    KAFKA_BROKER_URL: "{{ include "realtime-weather-app.fullname" $ }}-kafka:9092"
   resources:
     requests:
       memory: "128Mi"
@@ -82,7 +81,6 @@ dataProcessorService:
   enabled: true
   replicaCount: 1
   env:
-    KAFKA_BROKER_URL: "{{ include "realtime-weather-app.fullname" $ }}-kafka:9092"
   resources:
     requests:
       memory: "256Mi"
@@ -100,7 +98,6 @@ forecastService:
     key: "kubernetes.io/hostname"
     value: "vishvesh-server-2"
   env:
-    KAFKA_BROKER_URL: "{{ include "realtime-weather-app.fullname" $ }}-kafka:9092"
   resources:
     requests:
       memory: "512Mi"
@@ -118,7 +115,6 @@ dashboardBackendService:
     targetPort: 5000
     type: ClusterIP
   env:
-    KAFKA_BROKER_URL: "{{ include "realtime-weather-app.fullname" $ }}-kafka:9092"
   resources:
     requests:
       memory: "128Mi"
