@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "realtime-weather-app.fullname" . }}-kafka
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  replicas: {{ .Values.kafka.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kafka
+  template:
+    metadata:
+      labels:
+        {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kafka
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: kafka
+          image: "{{ .Values.kafka.image.repository }}:{{ .Values.kafka.image.tag }}"
+          imagePullPolicy: {{ .Values.kafka.image.pullPolicy }}
+          ports:
+            - name: client
+              containerPort: 9092
+          env:
+            - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+              value: "{{ include "realtime-weather-app.fullname" . }}-zookeeper:2181"
+            - name: KAFKA_CFG_BROKER_ID
+              value: "1"
+            - name: KAFKA_CFG_LISTENERS
+              value: "PLAINTEXT://:9092"
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+
+              value: "PLAINTEXT://{{ include "realtime-weather-app.fullname" . }}-kafka:9092"
+            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT"
+            - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS
+              value: "0"
+            - name: KAFKA_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /bitnami/kafka
+          resources:
+            {{- toYaml .Values.kafka.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -xc
+                - |
+                  # Check if Kafka is listening on the client port
+                  (echo > /dev/tcp/127.0.0.1/{{ .Values.kafka.service.port }}) >/dev/null 2>&1 || exit 1;
+                  # Check if Kafka can serve metadata requests (implies client readiness)
+                  /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server 127.0.0.1:{{ .Values.kafka.service.port }} --list >/dev/null 2>&1
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+      volumes:
+        - name: kafka-data
+          persistentVolumeClaim:
+            claimName: {{ include "realtime-weather-app.fullname" . }}-kafka-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "realtime-weather-app.fullname" . }}-kafka-data
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "realtime-weather-app.fullname" . }}-zookeeper # Service name for Zookeeper
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+spec:
+  type: ClusterIP
+  ports:
+    - name: client
+      port: 2181
+      targetPort: client
+    - name: follower
+      port: 2888
+      targetPort: follower
+    - name: election
+      port: 3888
+      targetPort: election
+  selector:
+    {{- include "realtime-weather-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper

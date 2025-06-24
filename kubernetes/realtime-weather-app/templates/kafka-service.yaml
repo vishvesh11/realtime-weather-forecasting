@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "realtime-weather-app.fullname" . }}-kafka
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  type: ClusterIP
+  ports:
+    - name: client
+      port: 9092
+      targetPort: client
+  selector:
+    {{- include "realtime-weather-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka

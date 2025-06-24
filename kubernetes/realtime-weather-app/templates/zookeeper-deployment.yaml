@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "realtime-weather-app.fullname" . }}-zookeeper
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+spec:
+  replicas: {{ .Values.zookeeper.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "realtime-weather-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: zookeeper
+  template:
+    metadata:
+      labels:
+        {{- include "realtime-weather-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: zookeeper
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: zookeeper
+          image: "{{ .Values.zookeeper.image.repository }}:{{ .Values.zookeeper.image.tag }}"
+          imagePullPolicy: {{ .Values.zookeeper.image.pullPolicy }}
+          ports:
+            - name: client
+              containerPort: 2181
+            - name: follower
+              containerPort: 2888
+            - name: election
+              containerPort: 3888
+          env:
+            - name: ZOO_ENABLE_AUTH
+              value: "no"
+            - name: ZOO_TICK_TIME
+              value: "2000"
+            - name: ZOO_INIT_LIMIT
+              value: "5"
+            - name: ZOO_SYNC_LIMIT
+              value: "2"
+          volumeMounts:
+            - name: zookeeper-data
+              mountPath: /bitnami/zookeeper
+          resources:
+            {{- toYaml .Values.zookeeper.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: client
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 5
+      volumes:
+        - name: zookeeper-data
+          persistentVolumeClaim:
+            claimName: {{ include "realtime-weather-app.fullname" . }}-zookeeper-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "realtime-weather-app.fullname" . }}-zookeeper-data
+  labels:
+    {{- include "realtime-weather-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
