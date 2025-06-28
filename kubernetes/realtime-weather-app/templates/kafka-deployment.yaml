@@ -30,13 +30,14 @@ spec:
               containerPort: 9092
           env:
             - name: KAFKA_CFG_ZOOKEEPER_CONNECT
-              value: "{{ include "realtime-weather-app.fullname" . }}-zookeeper:2181"
+              value: "{{ include "realtime-weather-app.fullname" . }}-zookeeper:2181" # Connects to Zookeeper Service
             - name: KAFKA_CFG_BROKER_ID
-              value: "1"
+              value: "1" # For a single broker, ensure unique in a multi-broker setup
             - name: KAFKA_CFG_LISTENERS
-              value: "PLAINTEXT://:9092"
-            - name: KAFKA_CFG_ADVERTISED_LISTENERS_COMMAND
-              value: "echo PLAINTEXT://$(KAFKA_HOST):9092"
+              value: "PLAINTEXT://:9092" # Listen on all interfaces within the pod
+            # IMPORTANT FIX: Use _COMMAND to ensure KAFKA_HOST is expanded by shell
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS_COMMAND # <-- This line is the key fix
+              value: "echo PLAINTEXT://$(KAFKA_HOST):9092" # <-- The command to execute
             - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
               value: "PLAINTEXT:PLAINTEXT"
             - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
@@ -44,8 +45,8 @@ spec:
             - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
             - name: KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS
-              value: "0"
-            - name: KAFKA_HOST
+              value: "0" # Faster rebalances for dev/test
+            - name: KAFKA_HOST # Inject the pod's IP address as an environment variable
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
@@ -71,10 +72,10 @@ spec:
                   (echo > /dev/tcp/127.0.0.1/{{ .Values.kafka.service.port }}) >/dev/null 2>&1 || exit 1;
                   # Check if Kafka can serve metadata requests (implies client readiness)
                   /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server 127.0.0.1:{{ .Values.kafka.service.port }} --list >/dev/null 2>&1
-            initialDelaySeconds: 60
+            initialDelaySeconds: 60 # Give Kafka plenty of time to start and sync
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 10
+            timeoutSeconds: 10 # Increased timeout
+            failureThreshold: 12 # Increased failure threshold
       volumes:
         - name: kafka-data
           persistentVolumeClaim:
@@ -92,4 +93,4 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi # Adjust storage size as needed
+      storage: 8Gi # Adjust storage size as needed
