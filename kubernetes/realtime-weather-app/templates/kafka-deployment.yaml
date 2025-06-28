@@ -93,4 +93,4 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 8Gi # Adjust storage size as needed
+      storage: 5Gi # Adjust storage size as needed
